@@ -1,0 +1,81 @@
+html, body {
+  background: #424242;
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 100;
+  color: #ffffff !important;
+}
+
+a {
+  color: inherit !important;
+  text-decoration: none;
+}
+
+.links a {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 400;
+}
+
+.links a:hover {
+  transition: all .2s ease-in;
+  background: none !important;
+}
+
+.fill {
+  flex: 1 1 auto;
+}
+
+.home {
+  flex: 1;
+}
+
+md-content {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+footer {
+  flex: 0 0 60px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+md-toolbar {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 100;
+  background: transparent !important;
+  font-size: 30px;
+  color: #ffffff !important;
+}
+
+md-card {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 100;
+  background: #E84C3D !important;
+}
+
+md-button {
+  transition: all .2s ease-in;
+  background: none !important;
+}
+
+md-button:hover {
+  background: #6200EA !important;
+
+}
+
+.intro {
+  flex: 1 0 0;
+}
+
+.router {
+  flex: 2 0 0;
+}
+
+main {
+  display: flex;
+  flex-direction: row;
+}
