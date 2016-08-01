@@ -17,7 +17,7 @@ export const routes: RouterConfig = [
 
 export const asyncRoutes: AsyncRoutes = {
   'Projects': require('es6-promise-loader!./projects'),
-  'CV': require('es6-promise-loader!./cv')
+  'CV': require('es6-promise-loader!./cv'),
   'PGP': require('es6-promise-loader!./pgp')
 };
 
