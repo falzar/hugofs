@@ -1,0 +1,8 @@
+md-card {
+  margin: 25px;
+}
+
+.download {
+  display: flex;
+  justify-content: space-around;
+}
