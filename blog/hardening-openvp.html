@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>HugoFS - Blog - Hardening OpenVPN</title>
+  <link rel="shortcut icon" href="/blog/assets/images/favicon.ico">
+  <link rel="stylesheet" href="/blog/assets/css/style.css">
+  <link rel="alternate" type="/blog/application/rss+xml" title="My Blog" href="/rss.xml">
+  <link rel="stylesheet" href="/blog/assets/css/highlight.css">
+</head>
+<body>
+
+  <nav class="main-nav">
+    
+        <a href='/blog/'> <span class="arrow">←</span> Home </a>
+    
+
+    
+        
+            <a href='https://hugofs.com'>About </a>
+        
+    
+    <a class="cta" href="/blog/feed.xml">Subscribe</a>
+</nav>
+
+
+  
+
+  <section id="wrapper" class="">
+    <article class="post">
+    <header>
+        <h1>Hardening OpenVPN</h1>
+        <h2 class="headline">September 3, 2015</h2>
+    </header>
+    <section id="post-body">
+        <p><img src="../../assets/images/OpenVPN.png" alt="OpenVPN Image"></p>
+
+<h1 id="intro">Intro</h1>
+
+<p><a href="https://openvpn.net/index.php/open-source.html">OpenVPN</a> is an open source VPN solution that works on a tonne of platforms. However, the default configuration is somewhat outdated. Some of these tips only work with OpenVPN 2.3+</p>
+
+<h1 id="use-easy-rsa3">Use Easy-RSA3</h1>
+
+<p>OpenVPN usually ships with Easy-RSA2. But today (03/09/2015) <a href="https://github.com/OpenVPN/easy-rsa/releases">Easy-RSA3</a> has been oficially released. I&#39;ve used the release candidate since 2014 and it has never failed me. With the oficial release you now have no excuse to migrate your PKI.</p>
+
+<p>I find the third version quite a bit easier to use and manage. The vars file now has sane defaults, they added a simpler distinguished name scheme where you only need to enter a common name and removed the deprecated Netscape Cert Attribute.</p>
+
+<h1 id="key-sizes">Key sizes</h1>
+
+<h2 id="x509-key-size">x509 Key size</h2>
+
+<p>When generating your CA, server and client certificates set <em>at least</em> 2048 bit key lengths. 1024 bit keys are no longer deemed secure. 2048 bits are secure for years to come, but if you are aparanoid 4096 bit keys are also common. However, CPU usage, key generation time and TLS handshakes will take longer.</p>
+
+<p>To increase the key sizes you must edit your vars file within easyrsa.</p>
+
+<h2 id="dh-parameters-length">DH parameters length</h2>
+
+<p>2048 bits is considered secure, but you might want to generate a 4096 one. Genrating these parameters takes quite a while, depending on the machine, and the amount of time only increases as the size of the key goes up.</p>
+
+<h1 id="hardening-the-control-channel">Hardening the control channel</h1>
+
+<h2 id="tls-cipher">TLS-Cipher</h2>
+
+<p>On your server conf file choose modern ciphers. These include:</p>
+
+<ul>
+<li><code>TLS-DHE-RSA-WITH-AES-256-GCM-SHA384</code></li>
+<li><code>TLS-DHE-RSA-WITH-AES-256-CBC-SHA256</code></li>
+<li><code>TLS-DHE-RSA-WITH-AES-128-GCM-SHA256</code></li>
+<li><code>TLS-DHE-RSA-WITH-AES-128-CBC-SHA256</code></li>
+</ul>
+
+<p>If you <em>need</em> compatibility with older OpenVPN version you can add any of these:</p>
+
+<ul>
+<li><code>TLS-DHE-RSA-WITH-AES-256-CBC-SHA</code></li>
+<li><code>TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA</code></li>
+<li><code>TLS-DHE-RSA-WITH-AES-128-CBC-SHA</code></li>
+<li><code>TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA</code></li>
+</ul>
+
+<p>The 128 bit key size ciphers should be secure for a long time. However, depending on your level of paranoia, you might want to only enable the 256 bit key size ciphers.</p>
+
+<h2 id="tls-version">TLS version</h2>
+
+<p>If you want, you can set the minimum TLS version to be 1.2 with the <code>tls-version-min 1.2</code> directive. If you do so you loose OpenVPN 2.2 and lower compatibility. If you experience problems you might need to specify the option on both the server and the client configuration.</p>
+
+<h1 id="hardening-the-data-channel">Hardening the data channel</h1>
+
+<h2 id="cipher">Cipher</h2>
+
+<p>The best ciphers available are <code>AES-256-CBC</code> or <code>CAMELLIA-256-CBC</code>. The former is the USA standard while the second one is the EU one.</p>
+
+<p>I suggest CBC mode as it&#39;s recommended by the OpenVPN manpages. You might have heard that it&#39;s not secure, but don&#39;t worry, that&#39;s far from the truth. CBC is secure <em>if</em> used correctly. Fortunately OpenVPN does implement it correctly (it uses encrypt-then-MAC - <a href="http://crypto.stackexchange.com/questions/202/should-we-mac-then-encrypt-or-encrypt-then-mac">You can read more about it here</a>).</p>
+
+<h2 id="message-authentication">Message Authentication</h2>
+
+<p>Both server and client should use SHA2 with either <code>auth SHA-256</code> or <code>auth SHA-512</code></p>
+
+<h1 id="mitigating-dos-attacks">Mitigating DoS attacks</h1>
+
+<p>By using tls-auth you can try to mitigate Denial of Service attacks to your OpenVPN server.</p>
+
+<p>This option works by generating a secret pre-shared key which must then be distributed to your clients (and server) along with the usual certificate/key files. This key is generated only <em>once</em>. When a client (or an attacker) connects to the server, unless it has the ta.key file OpenVPN won&#39;t even initiate the TLS handshake and drop the connection sooner. This file must be kept secret (just like any other key file). To generate it use:</p>
+
+<p><code>openvpn --genkey --secret ta.key</code></p>
+
+<p>On the server configuration file add</p>
+
+<p><code>tls-auth ta.key 0</code></p>
+
+<p>And on the client&#39;s configuration file</p>
+
+<p><code>tls-auth ta.key 1</code></p>
+
+<h1 id="mitigating-mitm-attacks">Mitigating MITM attacks</h1>
+
+<p>The <code>remote-cert-tls</code> directive is used to mitigate Man in the Middle attacks. To use it:</p>
+
+<p>On your clients&#39; configuration file add <code>remote-cert-tls server</code></p>
+
+<p>If you want to, you can add <code>remote-cert-tls client</code> on your server configuration file, but it isn&#39;t really necessary.</p>
+
+<p>This only works if each certificate has x509 Extended Key Usage values set correctly. All client certificates must set <code>clientauth</code>, while the server certificate must set <code>serverAuth</code> as the value. Easy-RSA3 does this for you.</p>
+
+<h1 id="tcp-vs-udp">TCP vs UDP</h1>
+
+<p>OpenVPN works best with UDP. It&#39;s stateless (meaning, among other things, it doesn&#39;t do handshakes), which makes it more suitable for VPN usage. However, in some cases, you might be behind a firewall which outright blocks UDP.</p>
+
+<p>It&#39;s also harder to do port scanning with UDP. Therefore, if you can, use UDP.</p>
+
+<p>In my university UDP is blocked (along with most TCP port). Therefor I use TCP and port 443. Unless you are a very sophisticated firewall with deep packet inspection this setup works for me.</p>
+
+<h1 id="android-amp-iphone">Android &amp; iPhone</h1>
+
+<p>This configuration works with modern iPhone and Android OS using the oficial OpenVPN apps. In both iOS and Android you must disable the <code>Force AES</code> option if you use ciphers with GCM or Camellia, but it only comes enabled by default in iOS.</p>
+
+<h1 id="ovpn-io-configuration"><a href="https://ovpn.io">ovpn.io</a> configuration</h1>
+
+<p>Here are ovpn.io&#39;s server and client configuration files:</p>
+
+<p>Server</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="c"># Server parameters</span>
+server 10.8.0.0 255.255.255.0
+port 443
+port-share 127.0.0.1 4443
+proto tcp
+dev tun
+user nobody
+group nobody
+persist-key
+persist-tun
+ifconfig-pool-persist ipp.txt
+push <span class="s2">&quot;redirect-gateway def1 bypass-dhcp&quot;</span>
+push <span class="s2">&quot;dhcp-option DNS 208.67.222.222&quot;</span>
+keepalive <span class="m">10</span> 120
+
+<span class="c"># Control channel (TLS)</span>
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-256-GCM-SHA384
+tls-auth ta.key 0
+
+<span class="c"># Data channel</span>
+auth SHA512
+cipher AES-256-CBC
+
+<span class="c"># Compression</span>
+comp-lzo
+
+<span class="c"># Logging</span>
+verb 0
+
+<span class="c"># Certificates</span>
+ca ca.crt
+cert server.crt
+key server.key
+dh dh4096.pem
+</code></pre></div>
+<p>Client</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="c"># Client parameters</span>
+client
+dev tun
+proto tcp
+remote ovpn.io 443
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+
+<span class="c"># Control channel (TLS)</span>
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-256-GCM-SHA384
+tls-auth ta.key 1
+remote-cert-tls server
+
+<span class="c"># Data channel</span>
+auth SHA512
+cipher AES-256-CBC
+
+<span class="c"># Compression</span>
+comp-lzo yes
+
+<span class="c"># Logging</span>
+verb 4
+
+<span class="c"># Certificates</span>
+ca ca.crt
+cert UUID.crt
+key UUID.key
+</code></pre></div>
+    </section>
+</article>
+<footer id="post-meta" class="clearfix">
+    <a href="http://twitter.com/hugo19941994">
+        <img class="avatar" src="/blog/assets/images/avatar.png">
+        <div>
+            <span class="dark">Hugo Ferrando Seage</span>
+            <span>My Loony Bun is fine Benny Lava!</span>
+        </div>
+    </a>
+
+    <section id="sharing">
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=/blog/2015/hardening-openvpn/ - Hardening OpenVPN by @hugo19941994"><span class="icon-twitter"> Tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+    </section>
+</footer>
+
+<!-- Disqus comments -->
+
+
+<!-- Archive post list -->
+
+    <ul id="post-list" class="archive readmore">
+        <h3>Read more</h3>
+        
+            <li>
+                <a href="/blog/2015/setting-up-opencv/">Setting up OpenCV 3 for Android development (including xfeatures2d)<aside class="dates">Sep 30</aside></a>
+            </li>
+        
+            <li>
+                <a href="/blog/2015/hardening-openvpn/">Hardening OpenVPN<aside class="dates">Sep 03</aside></a>
+            </li>
+        
+            <li>
+                <a href="/blog/2015/linux-on-a-surface-pro-1/">Dual booting Linux & Windows 10 on a Surface Pro 1 (with encryption!)<aside class="dates">Jul 16</aside></a>
+            </li>
+        
+    </ul>
+
+
+  </section>
+
+  <script src="/blog/../js/jquery-2.1.4.min.js"></script>
+  <script src="/blog/assets/js/main.js"></script>
+  <script src="/blog/assets/js/highlight.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <!--<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', '', 'auto');
+    ga('send', 'pageview');
+</script>-->
+</body>
+</html>
