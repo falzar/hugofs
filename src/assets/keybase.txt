@@ -1,0 +1,74 @@
+==================================================================
+https://keybase.io/hugo19941994
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://hugofs.com
+  * I am hugo19941994 (https://keybase.io/hugo19941994) on keybase.
+  * I have a public key with fingerprint A40B C90C 118E 47A0 8FFE  E384 CDB7 6AAF 6CFF 4486
+
+To do so, I am signing this object:
+
+{
+    "body": {
+        "key": {
+            "eldest_kid": "01015619f38f164e46460d2a2735445e8ba89333630fb3c79b7017a95c4fe7b39f880a",
+            "fingerprint": "a40bc90c118e47a08ffee384cdb76aaf6cff4486",
+            "host": "keybase.io",
+            "key_id": "cdb76aaf6cff4486",
+            "kid": "01015619f38f164e46460d2a2735445e8ba89333630fb3c79b7017a95c4fe7b39f880a",
+            "uid": "c1b8517be91175ad6455417a21decc19",
+            "username": "hugo19941994"
+        },
+        "service": {
+            "hostname": "hugofs.com",
+            "protocol": "https:"
+        },
+        "type": "web_service_binding",
+        "version": 1
+    },
+    "ctime": 1469654246,
+    "expire_in": 157680000,
+    "prev": "95a1ac631a873d7ddcf769ca576f67e2ea6333a0d8fafa70a2d986103151f944",
+    "seqno": 6,
+    "tag": "signature"
+}
+
+which yields the signature:
+
+-----BEGIN PGP MESSAGE-----
+Version: GnuPG v2
+
+owGtkn1QFGUcx3n3wDHIS0fIbG4HYZhQdm/fDyMVGwYJvKSMOuTm2d1nYT24PfYW
+6AIMhBwUTSfphQJDrrkZ7W0QlSQhxqIBA0oGBotJyRwcU4RegKI42rWa6Y/+7Jl5
+5pnn93y+39/LPEdXBAcYAgc79nxYuLRtf+AXt7iAZxpj58sRThY8iKUcccB7BywU
+oFu1OyQBsSAohmIkhbEizogYRUCCIihUMAMzjZMEQUKGAwyL4ziFoyKH8zTL0ShG
+A5bkCRHSHM6KDIMCJBERJWc+VFyK5FQ1W0CgHM+iPIYxkKAByogihDhD8AJHUwCI
+FC+KBMFQmrBAdusKrTgOuOFGSdZi2sV+r7z/4P/nukv+yoNxDInRHGQxjCaBQBEk
+SWi8GRMgz2OsDrqh4gRFUKMLSvJljGUJfSOViYj2UirxUB+u3s2/KNG9kZeLNLVL
+kVWZlwv1uKq63BZdp3pcOlgGOfvfFnZOcgraJDVFKVTckuxELJhG8qqke2IExVIk
+YSaoRAQ+75IUaJd0gqQpBtWWngeWapYsCTDwHE/hGGBoXKAFgRdpiuWBRooUDc0Q
+UNp0ACowIhABjQKzwDIUhuIYiYksQSB6V8VOGbFoqVSQr3m6pXwnUEsUiFRGHAha
+GxIQaAgICw3S/1hARHjUPx9vbUHkUkWxx7ol80Ti6RbC0JNzpqwnuDK9Zdw2eSj7
+8qqSc8Bm+slXcOxGWN0pE37F1LHAsqurH09onLq519B+9UhVQ8jydT9u35F5Gs9N
+8lcnR6/LXm17KuTNwJywSf+jv133djek9/vTLwx/Gi6mDN+u+aUbeeTaKjbm5aSz
+E919qneNz9LWEl94f+Qy9nx3aFvaytrGpYqm958wmpd/OTNU+bBv/eTvjkC8fk6s
+dyTVfPdBWv+z21JzL2J9Q0ONiWLc5sw6fmeN1dx1/HCz75zxzmLX069viQqKi7WZ
+BqzBK7Kqk8c3OXLAR8n7RhwZvtcOnvrE25l65MZXVXUbvPLmpAx/Qo8R3y3596ad
+XIbMGc7GKO1fW+cGi6KvzY/0VO0q2LC1YjJiKxJqYiLjS+u9dGeuNa8xq3dw4L7x
+2TeUjxVzrLG5tCM6pXnqpQm/rWv+3fPFiyvHUj87Nrr/VmirafTyvp6Zg8yOppky
+5/pZ8WeQWmvIG5/u/OMx5+fJmy7GLbwYpESGeroeyOxNIaZuTm/3Hu3szVImztwO
+Pz7W9UNSu/HXKyOG8uELu084Z77N9mY030moFA9fr38o3nP1Vc+aQkfDUsw7xrvj
+CTG2olHlFSu685vWWuXBJxeb30u9RPlmyZNk/wt16uJi3q6MNtel6Y75hbug4fs9
+b/cdaMJbB8YORdnf+hM=
+=b3zo
+-----END PGP MESSAGE-----
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/hugo19941994
+
+==================================================================
+
