@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>HugoFS - Blog - Setting up OpenCV 3 for Android development (including xfeatures2d)</title>
+  <link rel="shortcut icon" href="/blog/assets/images/favicon.ico">
+  <link rel="stylesheet" href="/blog/assets/css/style.css">
+  <link rel="alternate" type="/blog/application/rss+xml" title="My Blog" href="/rss.xml">
+  <link rel="stylesheet" href="/blog/assets/css/highlight.css">
+</head>
+<body>
+
+  <nav class="main-nav">
+    
+        <a href='/blog/'> <span class="arrow">←</span> Home </a>
+    
+
+    
+        
+            <a href='https://hugofs.com'>About </a>
+        
+    
+    <a class="cta" href="/blog/feed.xml">Subscribe</a>
+</nav>
+
+
+  
+
+  <section id="wrapper" class="">
+    <article class="post">
+    <header>
+        <h1>Setting up OpenCV 3 for Android development (including xfeatures2d)</h1>
+        <h2 class="headline">September 30, 2015</h2>
+    </header>
+    <section id="post-body">
+        <p><img src="../../assets/images/Rick.png" alt="Rick" style="width: 250px; margin-left:auto;margin-right:auto;display:block;"/></p>
+
+<h1 id="requirements">Requirements</h1>
+
+<ul>
+<li><a href="http://developer.android.com/sdk/index.html">Android Studio 1.3+</a></li>
+<li><a href="https://github.com/Itseez/opencv">OpenCV 3</a></li>
+<li><a href="https://github.com/Itseez/opencv_contrib">OpenCV extra modules</a></li>
+<li><a href="https://github.com/martine/ninja/releases">Ninja build system</a></li>
+<li><a href="http://www.cmake.org/download/">CMake</a></li>
+<li><a href="https://github.com/taka-no-me/android-cmake">Android NDK CMake toolchain</a></li>
+</ul>
+
+<h1 id="set-up">Set Up</h1>
+
+<h2 id="android-studio">Android Studio</h2>
+
+<ol>
+<li><a href="http://developer.android.com/sdk/index.html">Download and install Android Studio</a>
+
+<ul>
+<li>During installation include <strong>SDK Manager</strong> if you didn&#39;t have it already installed</li>
+<li>After installation install <strong>Android NDK</strong> and <strong>Google Play Library</strong> from the SDK Manager</li>
+</ul></li>
+<li>Add the NDK Path to your <code>PATH</code> environment variable</li>
+<li>Add an environment variable called <code>ANDROID_NDK</code> with (again) your NDK Path</li>
+</ol>
+
+<h2 id="opencv">OpenCV</h2>
+
+<ol>
+<li>Download and extract both <a href="https://github.com/Itseez/opencv">OpenCV 3</a> and the <a href="https://github.com/Itseez/opencv-contrib">OpenCV 3 extra modules</a> if you want the non-free features (such as SIFT and SURF)</li>
+<li>Copy the contents of the extra module into the regular OpenCV&#39;s folder</li>
+</ol>
+
+<h2 id="ninja">Ninja</h2>
+
+<ol>
+<li>Download and extract <a href="https://github.com/martine/ninja/releases">Ninja</a></li>
+<li>Add it to your PATH environment variable</li>
+</ol>
+
+<h2 id="cmake">CMake</h2>
+
+<ol>
+<li>Download and install <a href="http://www.cmake.org/download/">CMake</a></li>
+<li>Download the <a href="https://github.com/taka-no-me/android-cmake">Android NDK CMake toolchain</a> and extract it in a folder</li>
+<li>Restart your computer to refresh your PATH environment variable</li>
+</ol>
+
+<h2 id="compiling">Compiling</h2>
+
+<ol>
+<li>Open CMake GUI</li>
+<li>Set the OpenCV source code folder and the destination folder</li>
+<li>Press configure and select Ninja as the generator</li>
+<li>Choose your own toolchain file and select the file named <code>android.toolchain.cmake</code> which you downloaded previously</li>
+<li>Choose your ABI in the CMake variables (you will probably want to enable NEON if you compile for ARMv7)</li>
+<li>If you want shared libraries instead of the default static ones you must enable <code>BUILD_SHARED_LIBS</code></li>
+<li>Generate the configuration</li>
+<li>Navigate to the destination folder with cmd and execute <code>ninja</code></li>
+</ol>
+
+<h2 id="but-i-just-want-to-add-the-contrib-modules-to-opencv4android">But I just want to add the contrib modules to OpenCV4Android!</h2>
+
+<p>You can also follow these same steps but only compile the extra modules. After the compilation is done just copy the files inside the <a href="http://sourceforge.net/projects/opencvlibrary/files/opencv-android/">OpenCV4Android</a> folder.</p>
+
+<h2 id="setting-up-a-new-project">Setting up a new project</h2>
+
+<p><img style="width: 200px" align="right" src="../../assets/images/folders.PNG"/></p>
+
+<ol>
+<li>Create a new Android Gradle project with Android Studio</li>
+<li><a href="https://sites.google.com/a/android.com/tools/tech-docs/new-build-system/gradle-experimental">Activate Gradle 2.5 (experimental for now)</a></li>
+<li> Import OpenCV4Android/sdk/java as a new Module</li>
+<li><a href="https://sites.google.com/a/android.com/tools/tech-docs/new-build-system/gradle-experimental">Activate Gradle 2.5 on the imported OpenCV4Android Module</a></li>
+<li>Copy OpenCV4Android/sdk/native/jni/include into /src/main/jni</li>
+<li>Copy OpenCV4Android/sdk/native/3rdparty/libs &amp; OpenCV4Android/sdk/native/libs into /src/main/jniLibs</li>
+<li>Modify build.gradle to include the include folder and link the shared libraries</li>
+</ol>
+
+<h1 id="sample-build-gradle">Sample build.Gradle:</h1>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">apply plugin: <span class="s1">&#39;com.android.model.application&#39;</span>
+model <span class="o">{</span>
+    android <span class="o">{</span>
+        <span class="nv">compileSdkVersion</span> <span class="o">=</span> 23
+        <span class="nv">buildToolsVersion</span> <span class="o">=</span> <span class="s2">&quot;23.0.1&quot;</span>
+
+        defaultConfig.with <span class="o">{</span>
+            <span class="nv">applicationId</span> <span class="o">=</span> <span class="s2">&quot;com.example.uemcar&quot;</span>
+            minSdkVersion.apiLevel <span class="o">=</span> 19
+            targetSdkVersion.apiLevel <span class="o">=</span> 23
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    compileOptions.with <span class="o">{</span>
+        <span class="nv">sourceCompatibility</span> <span class="o">=</span> JavaVersion.VERSION_1_7
+        <span class="nv">targetCompatibility</span> <span class="o">=</span> JavaVersion.VERSION_1_7
+    <span class="o">}</span>
+
+    android.ndk <span class="o">{</span>
+        <span class="nv">moduleName</span> <span class="o">=</span> <span class="s2">&quot;jniPart&quot;</span>
+        ldLibs +<span class="o">=</span> <span class="o">[</span><span class="s1">&#39;log&#39;</span><span class="o">]</span>
+        cppFlags +<span class="o">=</span> <span class="s2">&quot;-std=c++11&quot;</span>
+        cppFlags +<span class="o">=</span> <span class="s2">&quot;-fexceptions&quot;</span>
+        cppFlags +<span class="o">=</span> <span class="s2">&quot;-I${file(&quot;</span>src/main/jni/include<span class="s2">&quot;)}&quot;</span>.toString<span class="o">()</span>
+        ldLibs +<span class="o">=</span> <span class="o">[</span><span class="s2">&quot;android&quot;</span>, <span class="s2">&quot;EGL&quot;</span>, <span class="s2">&quot;GLESv2&quot;</span>, <span class="s2">&quot;dl&quot;</span>, <span class="s2">&quot;log&quot;</span>, <span class="s2">&quot;z&quot;</span><span class="o">]</span>
+        <span class="nv">stl</span> <span class="o">=</span> <span class="s1">&#39;gnustl_shared&#39;</span>
+    <span class="o">}</span>
+
+    android.buildTypes <span class="o">{</span>
+        release <span class="o">{</span>
+            <span class="nv">minifyEnabled</span> <span class="o">=</span> <span class="nb">false</span>
+<span class="nb">            </span>proguardFiles +<span class="o">=</span> file<span class="o">(</span><span class="s1">&#39;proguard-rules.txt&#39;</span><span class="o">)</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    android.productFlavors <span class="o">{</span>
+        create<span class="o">(</span><span class="s2">&quot;arm7&quot;</span><span class="o">)</span> <span class="o">{</span>
+            ndk.with <span class="o">{</span>
+                ndk.abiFilters +<span class="o">=</span> <span class="s2">&quot;armeabi-v7a&quot;</span>
+
+                File <span class="nv">curDir</span> <span class="o">=</span> file<span class="o">(</span><span class="s1">&#39;./&#39;</span><span class="o">)</span>
+                <span class="nv">curDir</span> <span class="o">=</span> file<span class="o">(</span>curDir.absolutePath<span class="o">)</span>
+                String <span class="nv">libsDir</span> <span class="o">=</span> curDir.absolutePath + <span class="s2">&quot;\\src\\main\\jniLibs\\armeabi-v7a\\&quot;</span>
+
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_java3.so&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_core.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_highgui.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_imgcodecs.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_calib3d.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_features2d.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_xfeatures2d.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_flann.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_hal.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_imgproc.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_ml.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_objdetect.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_photo.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_shape.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_stitching.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_superres.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_ts.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_video.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_videoio.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libopencv_videostab.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libIlmImf.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;liblibjasper.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;liblibjpeg.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;liblibpng.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;liblibtiff.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;liblibwebp.a&quot;</span>
+                ldLibs +<span class="o">=</span> libsDir + <span class="s2">&quot;libtbb.a&quot;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+dependencies <span class="o">{</span>
+    compile project<span class="o">(</span><span class="s1">&#39;:openCVLibrary300&#39;</span><span class="o">)</span>
+    compile <span class="s1">&#39;com.google.android.gms:play-services:7.8.0&#39;</span>
+    compile <span class="s1">&#39;com.android.support:appcompat-v7:23.0.1&#39;</span>
+<span class="o">}</span>
+</code></pre></div>
+    </section>
+</article>
+<footer id="post-meta" class="clearfix">
+    <a href="http://twitter.com/hugo19941994">
+        <img class="avatar" src="/blog/assets/images/avatar.png">
+        <div>
+            <span class="dark">Hugo Ferrando Seage</span>
+            <span>My Loony Bun is fine Benny Lava!</span>
+        </div>
+    </a>
+
+    <section id="sharing">
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=/blog/2015/setting-up-opencv/ - Setting up OpenCV 3 for Android development (including xfeatures2d) by @hugo19941994"><span class="icon-twitter"> Tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+    </section>
+</footer>
+
+<!-- Disqus comments -->
+
+
+<!-- Archive post list -->
+
+    <ul id="post-list" class="archive readmore">
+        <h3>Read more</h3>
+        
+            <li>
+                <a href="/blog/2015/setting-up-opencv/">Setting up OpenCV 3 for Android development (including xfeatures2d)<aside class="dates">Sep 30</aside></a>
+            </li>
+        
+            <li>
+                <a href="/blog/2015/hardening-openvpn/">Hardening OpenVPN<aside class="dates">Sep 03</aside></a>
+            </li>
+        
+            <li>
+                <a href="/blog/2015/linux-on-a-surface-pro-1/">Dual booting Linux & Windows 10 on a Surface Pro 1 (with encryption!)<aside class="dates">Jul 16</aside></a>
+            </li>
+        
+    </ul>
+
+
+  </section>
+
+  <script src="/blog/../js/jquery-2.1.4.min.js"></script>
+  <script src="/blog/assets/js/main.js"></script>
+  <script src="/blog/assets/js/highlight.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <!--<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', '', 'auto');
+    ga('send', 'pageview');
+</script>-->
+</body>
+</html>

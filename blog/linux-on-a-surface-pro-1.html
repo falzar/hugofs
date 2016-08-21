@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>HugoFS - Blog - Dual booting Linux & Windows 10 on a Surface Pro 1 (with encryption!)</title>
+  <link rel="shortcut icon" href="/blog/assets/images/favicon.ico">
+  <link rel="stylesheet" href="/blog/assets/css/style.css">
+  <link rel="alternate" type="/blog/application/rss+xml" title="My Blog" href="/rss.xml">
+  <link rel="stylesheet" href="/blog/assets/css/highlight.css">
+</head>
+<body>
+
+  <nav class="main-nav">
+    
+        <a href='/blog/'> <span class="arrow">←</span> Home </a>
+    
+
+    
+        
+            <a href='https://hugofs.com'>About </a>
+        
+    
+    <a class="cta" href="/blog/feed.xml">Subscribe</a>
+</nav>
+
+
+  
+
+  <section id="wrapper" class="">
+    <article class="post">
+    <header>
+        <h1>Dual booting Linux & Windows 10 on a Surface Pro 1 (with encryption!)</h1>
+        <h2 class="headline">July 16, 2015</h2>
+    </header>
+    <section id="post-body">
+        <!--# Dual boot Linux & Windows 8.1 on a Surface Pro 1/2 with encryption!-->
+
+<p><img src="../../assets/images/DSC_6733-2.jpg" alt="Surface Pro Image"></p>
+
+<h2 id="motivation">Motivation</h2>
+
+<p>There are lots of resources explaining how to do all this stuff, but they are all over the place. You have to Google, search Reddit, read some blog posts, the rEFInd manual, etc. This guide serves as a hub of sorts to find everything you need.</p>
+
+<p>After completing all steps you will have a secure, dual boot environment for the Surface Pro (or any other computer). Most of this guide will also be useful for the Surface Pro 3 and most UEFI-based computers. However some steps are only applicable to the Surface Pro 1/2, and some other steps might be missing for other machines.</p>
+
+<p>If you think something is missing or should be changed please <a href="https://github.com/hugo19941994/Arch-on-SP1/issues">open an issue</a> or <a href="mailto:hugoseage@gmail.com">email me</a>!</p>
+
+<h2 id="what-doesn-39-t-work">What doesn&#39;t work</h2>
+
+<ul>
+<li>I haven&#39;t found a way to enable the <strong>TPM for Windows</strong> while dual booting. Instead, we will use a password (or usb device) for Bitlocker.</li>
+<li>You will need a <strong>keyboard to change the OS</strong> (rEFInd doesn&#39;t have touch support). If you decide to use a password for Bitlocker you will also need a keyboard to boot into Windows.</li>
+<li><strong>Wi-Fi</strong> only works on older versions of the Linux kernel or with a patched Linux 4.1+. Below I will show you how to compile Linux 4.1.2 with the patches. I will try to setup a repo with an already compiled kernel in the future.</li>
+</ul>
+
+<h1 id="the-actual-guide">The <em>Actual</em> Guide</h1>
+
+<h2 id="very-first-steps">Very First Steps</h2>
+
+<p>Press Vol+ during startup. Disable both Secure Boot and the TPM. Don&#39;t worry, we will eventually enable Secure Boot and encrypt both file systems.</p>
+
+<h2 id="windows">Windows</h2>
+
+<ul>
+<li>Install Windows as usual (unless it&#39;s already there)</li>
+<li>Disable/Don&#39;t enable BitLocker</li>
+<li>Repartition you hard drive to have enough space for you Linux partition</li>
+<li>Mount a .iso image of your favorite Linux distribution (I&#39;m using <a href="http://antergos.com/">Antergos</a>) to a USB flash drive (with a tool such as <a href="http://rufus.akeo.ie/">Rufus</a>)</li>
+</ul>
+
+<h2 id="linux">Linux</h2>
+
+<ul>
+<li>Start your USB partition holding Vol- during startup</li>
+<li>Install Linux as usual. How to install a Linux distribution is out of the scope of this guide but here are a few things you need to take into account:
+
+<ul>
+<li>Do not use LVM. rEFInd doesn&#39;t work with it</li>
+<li>It might be wise to stick with ext4 partitions unless you feel adventurous</li>
+<li>Make sure you leave your Windows&#39; partitions intact. That includes the regular Windows partition, a 300mb Recovery partition and the FAT32 EFI partition (ESP)</li>
+<li>If you need to install <code>GRUB2</code> or any other boot loader just install it in the same partition as Linux. We will end up uninstalling any boot loaders in favor of using rEFInd and the kernel&#39;s own boot loader</li>
+</ul></li>
+<li>Boot into your Linux partition
+
+<ul>
+<li>Install <code>efibootmgr</code></li>
+<li>Remove <code>GRUB2</code> or any other boot loader</li>
+<li>Install <code>rEFInd</code></li>
+</ul></li>
+<li>Hopefully rEFInd will just work and you will have a fully functioning, dual boot system (sans SecureBoot, BitLocker &amp; Wi-Fi)</li>
+<li>If rEFInd isn&#39;t working when you start use efibootmgr to see what is going on. Below you can see some commands and explanations to guide you. If Windows boots up directly you can either modify the boot loaders with <a href="https://technet.microsoft.com/en-us/library/cc709667.aspx">bcdedit</a> or boot up a live Linux distro and use efibootmgr (I find the latter to be more reliable).</li>
+</ul>
+
+<h2 id="secureboot">SecureBoot</h2>
+
+<h3 id="why-bother">Why bother?</h3>
+
+<ol>
+<li>It prevents malicious code executing during startup</li>
+<li>If you don&#39;t, when you power on the Surface Pro, the screen will be bright red</li>
+</ol>
+
+<h3 id="explanation">Explanation</h3>
+
+<p>By default, the SP1/2&#39;s implementation of Secure Boot only allows Windows&#39; own boot loader. Even third-party Microsoft signed boot loaders will not work.</p>
+
+<p>However Microsoft released a tool to install more sane Secure Boot keys which allow third-party Microsoft signed boot loaders.</p>
+
+<p>We will use PreLoader and HashTool (which <strong>were</strong> signed by Microsoft) to boot into rEFInd, and boot into Windows and Linux.</p>
+
+<h3 id="steps">Steps</h3>
+
+<ul>
+<li>Boot into Linux</li>
+<li>Download <a href="http://blog.hansenpartnership.com/linux-foundation-secure-boot-system-released/">PreLoader and HashTool</a>. Place them in /boot/EFI/refind</li>
+<li>Delete the &quot;tools<em>x86&quot;, &quot;drivers</em>x86&quot; and &quot;refind_x86.efi&quot; folders. We will use 64bit .efi files only</li>
+<li>Rename (or create a copy of) &quot;refind_x64.efi&quot; to &quot;loader.efi&quot;</li>
+<li>Delete (and make a backup) of the drivers_x64 folder. If you don&#39;t, rEFInd will try to load them but their signature is not valid. For some reason you can&#39;t enroll them using HashTool. If you find a way to enroll them please let me know.</li>
+<li>Use efibootmgr to create a new boot entry which points at PreLoader.efi and make sure it&#39;s the first entry. At the end you will find the commands to do it</li>
+<li>Ensure that the default Windows boot loader is still present but isn&#39;t the first one</li>
+<li>Enter the UEFI (press Vol+ during startup) and enable Secure Boot. Install the default keys</li>
+<li>Boot into Windows and download the <a href="http://www.microsoft.com/en-ph/download/details.aspx?id=41666">Microsoft UEFI CA</a>
+
+<ul>
+<li>Follow the steps in the included PDF file. You will need to reboot once during the setup. During that reboot PreLoader will fail to start. That&#39;s completely normal. It will boot into Windows. Finish following the instructions and PreLoader should now work.</li>
+</ul></li>
+<li>Once you reboot again you should end up inside HashTool. Select loader.efi and enroll it. Go up a couple of folders (select &quot;..&quot;) and do the same for vmlinuz.</li>
+<li>If you update rEFInd or the Linux kernel you will need to re-enroll the boot loaders, but it shouldn&#39;t be too much of a hassle.</li>
+</ul>
+
+<h2 id="bitlocker-on-windows">BitLocker on Windows</h2>
+
+<ul>
+<li>Full disclosure - I would like to use the TPM to unlock the device, but even though the chain of trust isn&#39;t broken, Windows can&#39;t unlock the BitLocker partition using the TPM when it uses rEFInd</li>
+<li>Instead we will use a password (you can also use a USB drive if you prefer. I don&#39;t usually carry one around with me so a password seems more convenient)</li>
+<li>Boot into Windows and use gpedit.msc to enable PINs <a href="https://serverfault.com/questions/55394/how-do-i-set-the-bitlocker-pin">follow these instructions</a></li>
+<li>Enable BitLocker and select your password. Before encrypting, check the tick box at the end to ensure everything will work as intended</li>
+<li>Windows might throw an error when you try to enable BitLocker, such as &quot;The file was not found&quot;. <a href="https://social.technet.microsoft.com/Forums/windows/en-US/51947c62-dbcb-4613-b10d-707ff8b61d0d/bitlocker-the-system-cannot-find-the-file-specified?forum=w8itprosecurity">There is an easy solution that won&#39;t mess up your partitions</a></li>
+</ul>
+
+<h2 id="linux-encryption">Linux Encryption</h2>
+
+<p>TODO</p>
+
+<h2 id="fixing-the-wi-fi-driver">Fixing the Wi-Fi driver</h2>
+
+<p>As I mentioned earlier, Reyad Attiyat made 4 patches to fix the Wi-Fi chipset. These haven&#39;t been merged into the mainline kernel yet, so in the meantime we will have to recompile Linux &gt;= 4.1</p>
+
+<p>You might to follow a guide such as <a href="https://wiki.archlinux.org/index.php/Kernels/Compilation/Traditional">this one</a>, but I will give you a general view of the steps you need to take. It might seem daunting at first, but it&#39;s actually pretty straightforward</p>
+
+<ul>
+<li><a href="https://bugzilla.kernel.org/show_bug.cgi?id=69661#c90">Download the 4 (5 for SP2) patches</a> from the kernel&#39;s bugtracker. For each one of Reyad&#39;s attachments save the &quot;Raw Unified&quot; files with any name and .patch extension</li>
+<li>Then download the latest mainline kernel (at least Linux 4.1) from either git or directly from <a href="https://kernel.org/">kernel.org</a></li>
+<li>Extract the kernel, move the patches inside and execute <code>patch</code> on all the patch files</li>
+<li>Copy your current kernel configuration with <code>zcat /proc/config.gz &gt; .config</code></li>
+<li>Compile executing <code>make</code>. This takes my Surface Pro 1 around 30 minutes. It might ask you some questions about missing configurations. I&#39;m no kernel expert so I would recommend selecting the default options in all cases</li>
+<li>Execute <code>make modules_install</code>. This copies the modules (including the patched Wi-Fi drivers) into the appropriate folder</li>
+<li>Copy the kernel into the /boot directory with <code>cp -v arch/x86/boot/bzImage /boot/vmlinuz-YourKernelName</code>
+
+<ul>
+<li>As YourKernelName I usually use something among the lines of Linux-4.1.2</li>
+</ul></li>
+<li>Make the initial RAM disk with <code>mkinitcpio -k FullKernelName -c /etc/mkinitcpio.conf -g /boot/initramfs-YourKernelName.img</code>
+
+<ul>
+<li>It&#39;s vital you enter the same YourKernelName name as before. It won&#39;t work if you don&#39;t</li>
+<li>The FullKernelName corresponds to the folder the <code>make install_modules</code> command made inside /lib/modules/. It should be something similar to ARCH-4.1.2</li>
+</ul></li>
+</ul>
+
+<h1 id="efibootmgr-basics">efibootmgr Basics</h1>
+
+<p>efibootmgr is a simple command line program to change the EFI boot loaders. You usually have to run this as root so any commands must be preceded by sudo. To set everything up these commands will suffice:</p>
+
+<ul>
+<li><code>efibootmgr</code>
+
+<ul>
+<li>Displays the boot loaders, and their order</li>
+</ul></li>
+<li><code>efibootmgr -v</code>
+
+<ul>
+<li>Same as above but in verbose mode. With this you can see which .efi file corresponds with which bootloader</li>
+</ul></li>
+<li><code>efibootmgr -b Number -B</code>
+
+<ul>
+<li>removes the boot loader you specify</li>
+</ul></li>
+<li><code>efibootmgr -o Number,Number,Number</code>
+
+<ul>
+<li>Changes the boot order</li>
+</ul></li>
+<li><code>efibootmgr -c -p Number -l \\EFI\\refind\\BootLoader.efi -L BootLoaderName</code>
+
+<ul>
+<li>-c creates a new entry</li>
+<li>-p is to select the partition number. -p 2 means the EFI partition is dev/sda2</li>
+<li>-l is the location of the .efi file</li>
+<li>-L is the name of the bootloader)</li>
+<li>remember to use \\</li>
+</ul></li>
+</ul>
+
+<h1 id="useful-links">Useful Links</h1>
+
+<p><a href="http://blog.davidelner.com/dual-booting-ubuntu-14-10-on-the-surface-pro-3/">David Elner&#39;s blog post</a></p>
+
+<p><a href="http://www.rodsbooks.com/refind/">The rEFInd manual</a></p>
+
+<p><a href="https://www.reddit.com/r/surfacelinux">SurfaceLinux Subreddit</a></p>
+
+<p><a href="http://linux.die.net/man/8/efibootmgr">efibootmgr&#39;s manpage</a></p>
+
+<p><a href="https://technet.microsoft.com/en-us/library/cc709667.aspx">BCDEdit Command-Line Options</a></p>
+
+    </section>
+</article>
+<footer id="post-meta" class="clearfix">
+    <a href="http://twitter.com/hugo19941994">
+        <img class="avatar" src="/blog/assets/images/avatar.png">
+        <div>
+            <span class="dark">Hugo Ferrando Seage</span>
+            <span>My Loony Bun is fine Benny Lava!</span>
+        </div>
+    </a>
+
+    <section id="sharing">
+        <a class="twitter" href="https://twitter.com/intent/tweet?text=/blog/2015/linux-on-a-surface-pro-1/ - Dual booting Linux & Windows 10 on a Surface Pro 1 (with encryption!) by @hugo19941994"><span class="icon-twitter"> Tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+    </section>
+</footer>
+
+<!-- Disqus comments -->
+
+
+<!-- Archive post list -->
+
+    <ul id="post-list" class="archive readmore">
+        <h3>Read more</h3>
+        
+            <li>
+                <a href="/blog/2015/setting-up-opencv/">Setting up OpenCV 3 for Android development (including xfeatures2d)<aside class="dates">Sep 30</aside></a>
+            </li>
+        
+            <li>
+                <a href="/blog/2015/hardening-openvpn/">Hardening OpenVPN<aside class="dates">Sep 03</aside></a>
+            </li>
+        
+            <li>
+                <a href="/blog/2015/linux-on-a-surface-pro-1/">Dual booting Linux & Windows 10 on a Surface Pro 1 (with encryption!)<aside class="dates">Jul 16</aside></a>
+            </li>
+        
+    </ul>
+
+
+  </section>
+
+  <script src="/blog/../js/jquery-2.1.4.min.js"></script>
+  <script src="/blog/assets/js/main.js"></script>
+  <script src="/blog/assets/js/highlight.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <!--<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', '', 'auto');
+    ga('send', 'pageview');
+</script>-->
+</body>
+</html>
